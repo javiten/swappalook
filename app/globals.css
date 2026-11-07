@@ -60,3 +60,43 @@
   .service-card .service-thumb { height: auto; min-height: 90px; }
   .proposal-dialog { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
 }
+
+.proposal-dialog .service-dialog-head { margin: 0; }
+.proposal-dialog .service-dialog-head > div { min-width: 0; overflow-wrap: anywhere; }
+.proposal-dialog .service-dialog-head .icon-button { flex: 0 0 44px; height: 44px; }
+.proposal-scroll { padding: 4px 20px 12px; overscroll-behavior: contain; overflow-wrap: anywhere; }
+.proposal-actions { padding: 12px 20px 16px; border-top: 1px solid var(--border); }
+.proposal-ticket label { display: grid; gap: 5px; min-width: 0; font-size: 13px; }
+.proposal-ticket select, .date-control, .proposal-scroll textarea {
+  background: white; border: 1px solid #ab829c; border-radius: 10px;
+  color: #432538; min-height: 44px; padding: 10px; width: 100%;
+}
+.proposal-ticket select:disabled { color: #624d59; opacity: 1; }
+.date-control { position: relative; display: flex; align-items: center; gap: 8px; font-size: 16px; }
+.date-control:focus-within { outline: 2px solid #803b65; }
+.date-control input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+.service-card { gap: 12px; }
+.service-info { min-width: 0; overflow-wrap: anywhere; }
+.card-top { gap: 8px; flex-wrap: wrap; justify-content: flex-start; }
+.card-duration, .card-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
+.card-duration { margin-left: auto; white-space: nowrap; }
+.empty-card > svg { margin: 0 auto; }
+.exchange-tabs > button { min-height: 44px; }
+.exchange-tabs > button > span { margin-left: 4px; }
+.exchange-entry { border: 1px solid var(--border); border-radius: 15px; margin-bottom: 10px; background: white; }
+.exchange-entry .exchange-row { width: 100%; text-align: left; margin: 0; border: 0; }
+.exchange-copy { flex: 1; min-width: 0; display: grid; gap: 4px; overflow-wrap: anywhere; }
+.exchange-copy > span, .exchange-detail { font-size: 13px; color: #66535f; }
+.exchange-detail { padding: 4px 14px 12px; }
+.notification-anchor { position: relative; flex: 0 0 auto; z-index: 15; }
+.notification-bell { position: relative; width: 44px; height: 44px; }
+.notification-bell > span { position: absolute; top: -5px; right: -5px; background: #77345d; color: white; border-radius: 12px; padding: 1px 5px; font-size: 11px; }
+.notifications-panel { position: absolute; top: calc(100% + 8px); right: 0; width: min(320px, calc(100vw - 36px)); max-height: 65dvh; overflow: auto; background: white; border: 1px solid var(--border); border-radius: 16px; padding: 14px; box-shadow: 0 12px 32px #30202d25; }
+.notifications-panel h2 { font-size: 17px; margin: 0 0 8px; }
+.notifications-panel button { width: 100%; min-height: 44px; padding: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; border-bottom: 1px solid var(--border); }
+.notifications-panel small { color: #77345d; white-space: nowrap; }
+@media (max-width: 760px) {
+  .topbar { padding-top: calc(18px + env(safe-area-inset-top)); }
+  .service-card { grid-template-columns: 60px minmax(0, 1fr); }
+  .service-card .service-thumb { min-height: 60px; align-self: start; }
+}
