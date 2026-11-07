@@ -103,3 +103,13 @@
 .exchange-response { margin-top: 12px; }
 .exchange-response-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .exchange-response-actions button { min-height: 44px; }
+
+.header-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.agenda-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.agenda-tabs > span { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: white; font-size: 13px; }
+.agenda-item { align-items: flex-start; gap: 14px; }
+.agenda-date { width: auto; flex: 0 0 84px; text-align: left; }
+.agenda-date strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.agenda-date span { font-size: 12px; color: #66535f; }
+.agenda-detail { min-width: 0; overflow-wrap: anywhere; }
+.agenda-detail .status { display: inline-block; margin-top: 6px; }
