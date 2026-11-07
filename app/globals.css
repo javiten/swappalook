@@ -18,3 +18,45 @@
 @media(max-width:480px){.service-dialog-layer{padding:12px}.service-dialog{width:100%}.service-dialog-head{padding:20px 18px 10px}.service-dialog-body{padding:4px 18px 14px}.service-dialog-actions{padding:12px 18px 16px}.service-dialog-actions>button{flex:1}}
 .service-dialog-actions>button{white-space:nowrap}
 @media(max-width:480px){.service-dialog-actions>button{padding-inline:12px;font-size:14px}}
+
+/* Catalog, proposal and sign-in transition */
+.splash-overlay {
+  isolation: isolate;
+  min-height: 100dvh;
+  background: #400832;
+  animation: none;
+}
+.splash-halo {
+  position: absolute;
+  z-index: -1;
+  width: min(88vw, 440px);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, #ae507e60, transparent 67%);
+  animation: splash-halo 650ms ease-out both;
+}
+.splash-overlay img { width: 96px; height: 112px; }
+.splash-overlay span { font-family: Georgia, serif; letter-spacing: -.04em; }
+@keyframes splash-halo { from { transform: scale(.65); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .splash-halo { animation: none; } }
+.catalog-placeholder { max-width: 860px; margin: 12vh auto; padding: 24px; display: grid; gap: 14px; }
+.catalog-placeholder i { height: 90px; border-radius: 18px; background: #efe5e9; }
+.own-badge { margin-left: 8px; border-radius: 20px; padding: 3px 8px; background: #f1e2eb; color: #673254; }
+.proposal-dialog { display: flex; flex-direction: column; max-height: 90dvh; }
+.proposal-dialog h2, .hero h2, .calendar-intro h2 { font-family: Georgia, serif; font-weight: 500; }
+.proposal-scroll { overflow: auto; min-height: 0; }
+.proposal-ticket { display: grid; gap: 7px; background: #f8eff3; border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+.proposal-ticket small { color: #74395e; font-weight: 700; }
+.proposal-ticket span, .proposal-ticket p { color: #66535f; font-size: 13px; margin: 0; }
+.proposal-ticket label { margin: 4px 0 0; }
+.proposal-ticket input, .proposal-ticket select { width: 100%; min-height: 44px; font-size: 16px; }
+.proposal-option { width: 100%; display: flex; align-items: center; justify-content: space-between; text-align: left; min-height: 48px; padding: 10px 14px; margin-bottom: 8px; border: 1px solid #e4d6df; border-radius: 12px; background: #fff; color: #37222f; }
+.proposal-option[aria-pressed=true] { background: #f5e3ee; border-color: #8c4670; }
+.proposal-actions { display: flex; gap: 10px; padding-top: 12px; }
+.proposal-actions .primary-button { flex: 1; min-height: 48px; justify-content: center; }
+.agenda-confirmed { border-left: 3px solid #709675; }
+@media (max-width: 760px) {
+  .service-grid { grid-template-columns: 1fr; }
+  .service-card { display: grid; grid-template-columns: 72px 1fr; align-items: stretch; text-align: left; }
+  .service-card .service-thumb { height: auto; min-height: 90px; }
+  .proposal-dialog { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+}
