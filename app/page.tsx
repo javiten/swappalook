@@ -9,23 +9,29 @@ import { createClient } from '@/lib/supabase/client'
 
 type Category = { id:string; name:string; slug:string; accent_color?:string; soft_color?:string }
 type Service = { id:string; title:string; description:string; duration_minutes:number; business_id:string; category_id:string; is_active:boolean; businesses?:{display_name:string}; categories?:Category }
-type Exchange = { id:string; status:string; current_version:number; requester_business_id:string; recipient_business_id:string; awaiting_business_id:string|null; last_activity_at:string; requester?:{display_name:string}; recipient?:{display_name:string}; current_proposal?:any }
+type Exchange = { id:string; status:string; archived_at?:string|null; current_version:number; requester_business_id:string; recipient_business_id:string; awaiting_business_id:string|null; last_activity_at:string; requester?:{display_name:string}; recipient?:{display_name:string}; current_proposal?:any }
 const logo='https://hebbkx1anhila5yf.public.blob.vercel-storage.com/SwappaLook%20Logo-D4cPoyBvzgsCqVZ5OkOAuNaFW4m5Qp.png'
 
 function Splash({ready}:{ready:boolean}){
  const [visible,setVisible]=useState(false)
+ const [minimumElapsed,setMinimumElapsed]=useState(false)
  useEffect(()=>{
   if(sessionStorage.getItem('swappalook:show-splash')!=='1')return
   sessionStorage.removeItem('swappalook:show-splash')
   setVisible(true)
  },[])
  useEffect(()=>{
-  if(!visible||!ready)return
+  if(!visible)return
+  const timer=window.setTimeout(()=>setMinimumElapsed(true),450)
+  return()=>window.clearTimeout(timer)
+ },[visible])
+ useEffect(()=>{
+  if(!visible||!ready||!minimumElapsed)return
   const timer=window.setTimeout(()=>setVisible(false),240)
   return()=>window.clearTimeout(timer)
- },[visible,ready])
+ },[visible,ready,minimumElapsed])
  if(!visible)return null
- return <div className={`splash-overlay ${ready?'is-ready':''}`} aria-label="SwappaLook">
+ return <div className={`splash-overlay ${ready&&minimumElapsed?'is-ready':''}`} aria-label="SwappaLook">
   <div className="splash-halo"/><img src="/swappalook-mark.png" alt=""/><span>SwappaLook</span>
  </div>
 }
@@ -50,7 +56,7 @@ export default function Home(){
    const {data:{user}}=await supabase.auth.getUser();if(!user){location.href='/login';return}
    const {data:businessId,error:idError}=await supabase.rpc('current_business_id')
    const meRes:any=businessId?await supabase.from('businesses').select('id,display_name,description,time_zone,primary_category_id').eq('id',businessId).maybeSingle():{data:null,error:idError}
-   const [catsRes,allRes,exRes]=await Promise.all([supabase.from('categories').select('id,name,slug,accent_color,soft_color').eq('is_active',true).order('sort_order'),supabase.from('services').select('id,title,description,duration_minutes,business_id,category_id,is_active,businesses!inner(display_name,is_active),categories!inner(name,slug,accent_color,soft_color)').eq('is_active',true).eq('businesses.is_active',true),supabase.from('exchanges').select('id,status,current_version,requester_business_id,recipient_business_id,awaiting_business_id,last_activity_at,requester:businesses!exchanges_requester_business_id_fkey(display_name),recipient:businesses!exchanges_recipient_business_id_fkey(display_name),current_proposal:exchange_proposals!exchanges_current_proposal_fk(requested_snapshot,offered_snapshot,requested_starts_at,offered_starts_at)').order('last_activity_at',{ascending:false})])
+   const [catsRes,allRes,exRes]=await Promise.all([supabase.from('categories').select('id,name,slug,accent_color,soft_color').eq('is_active',true).order('sort_order'),supabase.from('services').select('id,title,description,duration_minutes,business_id,category_id,is_active,businesses!inner(display_name,is_active),categories!inner(name,slug,accent_color,soft_color)').eq('is_active',true).eq('businesses.is_active',true),supabase.from('exchanges').select('*,requester:businesses!exchanges_requester_business_id_fkey(display_name),recipient:businesses!exchanges_recipient_business_id_fkey(display_name),current_proposal:exchange_proposals!exchanges_current_proposal_fk(requested_snapshot,offered_snapshot,requested_starts_at,offered_starts_at)').order('last_activity_at',{ascending:false})])
    const me=meRes.data
    const problems:string[]=[]
    if(meRes.error||idError){console.error('[v0] business lookup failed',meRes.error||idError);problems.push('No pudimos cargar los datos de tu comercio. Recargá la página o volvé a iniciar sesión.')}
@@ -73,7 +79,7 @@ export default function Home(){
   location.replace('/login')
  } function flash(v:string){setNotice(v);setTimeout(()=>setNotice(''),3000)}
  if(loading)return <><Splash ready={false}/><main className="catalog-placeholder" aria-busy="true"><i/><i/><i/></main></>
- return <><Splash ready={true}/><div className="app-shell"><aside className="sidebar"><div className="side-brand"><img src={logo} alt="SwappaLook"/><span>Swappa<span>Look</span></span></div><div className="side-nav">{nav.map(n=><button key={n.id} className={tab===n.id?'active':''} onClick={()=>{setTab(n.id);if(n.id==='exchanges')void load()}}><n.icon size={18}/><span>{n.label}</span>{n.id==='exchanges'&&exchanges.some(e=>e.awaiting_business_id===business?.id)&&<b>{exchanges.filter(e=>e.awaiting_business_id===business?.id).length}</b>}</button>)}</div><div className="sidebar-foot"><div className="profile-mini"><div className="avatar">{business?.display_name?.[0]||'S'}</div><div><strong>{business?.display_name}</strong><small>Comercio activo</small></div></div><button className="logout" onClick={()=>void logout().catch(()=>flash('No pudimos cerrar sesión. Intentá de nuevo.'))}><LogOut size={16}/> Cerrar sesión</button></div></aside><main className="main-area"><header className="topbar"><div><p className="eyebrow">RED DE CONFIANZA</p><h1>{tab==='explore'?'Explorar servicios':nav.find(n=>n.id===tab)?.label}</h1></div><div className="header-actions">{business?.id&&<Notifications key={business.id} client={supabase} businessId={business.id} onOpen={openExchange}/>}<AccountMenu name={business?.display_name} logout={logout}/></div></header><div className="content">{notice&&<div className="toast"><Check size={16}/> {notice}</div>}{tab==='explore'&&<Explore businessId={business?.id} visible={visible} categories={categories} filter={filter} setFilter={setFilter} query={query} setQuery={setQuery} onSelect={setSelected}/>} {tab==='exchanges'&&<Exchanges client={supabase} error={exchangeError} focused={focusedExchange} setFocused={setFocusedExchange} onOpen={openExchange} onRetry={load} exchanges={exchanges} business={business} exchangeTab={exchangeTab} setExchangeTab={setExchangeTab}/>} {tab==='calendar'&&<Agenda exchanges={exchanges} business={business}/>} {tab==='business'&&<Business business={business} loadError={loadError} services={mine} onNew={()=>{setEditing(null);setShowService(true)}} onEdit={(s:Service)=>{setEditing(s);setShowService(true)}} onRefresh={load}/>}</div></main><nav className="bottom-nav">{nav.map(n=><button key={n.id} className={tab===n.id?'active':''} onClick={()=>{setTab(n.id);if(n.id==='exchanges')void load()}}><n.icon size={19}/><span>{n.label}</span></button>)}</nav></div>{showService&&business?.primary_category_id&&<ServiceModal service={editing} business={business} supabase={supabase} onClose={()=>setShowService(false)} onSaved={()=>{setShowService(false);load();flash(editing?'Servicio actualizado':'Servicio guardado')}}/>}{selected&&<ExchangeModal service={selected} owned={selected.business_id===business?.id} onManage={()=>{setSelected(null);setTab('business')}} timeZone={business?.time_zone||'America/New_York'} mine={mine} supabase={supabase} onClose={()=>setSelected(null)} onSaved={()=>{setSelected(null);setFocusedExchange(null);load();setExchangeTab('sent');setTab('exchanges');flash('Propuesta enviada')}}/>}</>
+ return <><Splash ready={true}/><div className="app-shell"><aside className="sidebar"><div className="side-brand"><img src={logo} alt="SwappaLook"/><span>Swappa<span>Look</span></span></div><div className="side-nav">{nav.map(n=><button key={n.id} className={tab===n.id?'active':''} onClick={()=>{setTab(n.id);if(n.id==='exchanges')void load()}}><n.icon size={18}/><span>{n.label}</span>{n.id==='exchanges'&&exchanges.some(e=>e.awaiting_business_id===business?.id)&&<b>{exchanges.filter(e=>e.awaiting_business_id===business?.id).length}</b>}</button>)}</div><div className="sidebar-foot"><div className="profile-mini"><div className="avatar">{business?.display_name?.[0]||'S'}</div><div><strong>{business?.display_name}</strong><small>Comercio activo</small></div></div><button className="logout" onClick={()=>void logout().catch(()=>flash('No pudimos cerrar sesión. Intentá de nuevo.'))}><LogOut size={16}/> Cerrar sesión</button></div></aside><main className="main-area"><header className="topbar"><div><p className="eyebrow">Upgrade your style with Swappalook</p><h1>{tab==='explore'?'Explorar servicios':nav.find(n=>n.id===tab)?.label}</h1></div><div className="header-actions">{business?.id&&<Notifications key={business.id} client={supabase} businessId={business.id} onOpen={openExchange}/>}<AccountMenu name={business?.display_name} logout={logout}/></div></header><div className="content">{notice&&<div className="toast"><Check size={16}/> {notice}</div>}{tab==='explore'&&<Explore businessId={business?.id} visible={visible} categories={categories} filter={filter} setFilter={setFilter} query={query} setQuery={setQuery} onSelect={setSelected}/>} {tab==='exchanges'&&<Exchanges client={supabase} error={exchangeError} focused={focusedExchange} setFocused={setFocusedExchange} onOpen={openExchange} onRetry={load} exchanges={exchanges} business={business} exchangeTab={exchangeTab} setExchangeTab={setExchangeTab}/>} {tab==='calendar'&&<Agenda exchanges={exchanges} business={business}/>} {tab==='business'&&<Business business={business} loadError={loadError} services={mine} onNew={()=>{setEditing(null);setShowService(true)}} onEdit={(s:Service)=>{setEditing(s);setShowService(true)}} onRefresh={load}/>}</div></main><nav className="bottom-nav">{nav.map(n=><button key={n.id} className={tab===n.id?'active':''} onClick={()=>{setTab(n.id);if(n.id==='exchanges')void load()}}><n.icon size={19}/><span>{n.label}</span></button>)}</nav></div>{showService&&business?.primary_category_id&&<ServiceModal service={editing} business={business} supabase={supabase} onClose={()=>setShowService(false)} onSaved={()=>{setShowService(false);load();flash(editing?'Servicio actualizado':'Servicio guardado')}}/>}{selected&&<ExchangeModal service={selected} owned={selected.business_id===business?.id} onManage={()=>{setSelected(null);setTab('business')}} timeZone={business?.time_zone||'America/New_York'} mine={mine} supabase={supabase} onClose={()=>setSelected(null)} onSaved={()=>{setSelected(null);setFocusedExchange(null);load();setExchangeTab('sent');setTab('exchanges');flash('Propuesta enviada')}}/>}</>
 }
 function Explore({businessId,visible,categories,filter,setFilter,query,setQuery,onSelect}:any){return <><section className="hero"><div><p className="eyebrow">INTERCAMBIÁ SIN DINERO</p><h2>Encontrá tu próximo intercambio.</h2><p>Descubrí los servicios publicados por la red.</p></div><div className="hero-spark"><Sparkles size={28}/></div></section><div className="search-row"><div className="search-box"><Search size={18}/><input aria-label="Buscar servicio o comercio" placeholder="Buscar servicio o comercio" value={query} onChange={e=>setQuery(e.target.value)}/></div></div><div className="filter-row"><button className={filter==='all'?'filter active':'filter'} onClick={()=>setFilter('all')}>Todos</button>{categories.map((c:Category)=><button key={c.id} className={filter===c.id?'filter active':'filter'} onClick={()=>setFilter(c.id)}>{c.name}</button>)}</div><div className="section-heading"><div><p className="eyebrow">CATÁLOGO INTERNO</p><h2>Servicios para intercambiar</h2></div><span className="muted">{visible.length} disponibles</span></div><div className="service-grid">{visible.map((s:Service)=><button className="service-card" key={s.id} onClick={()=>onSelect(s)}><Thumb category={s.categories}/><div className="service-info"><div className="card-top"><span className="category-label">{s.categories?.name}</span><span className="card-duration"><Clock3 size={14} aria-hidden="true"/>{s.duration_minutes} min</span></div><h3>{s.title}</h3><p>{s.businesses?.display_name}{s.business_id===businessId&&<small className="own-badge">Tu comercio</small>}</p><span className="card-link">Ver servicio <ChevronRight size={15}/></span></div></button>)}{!visible.length&&<div className="empty-card"><Sparkles size={24}/><h3>No encontramos servicios</h3><p>Probá con otra búsqueda o filtro.</p></div>}</div></>}
 function Business({business,loadError,services,onNew,onEdit,onRefresh}:any){const ready=!!business?.primary_category_id;return <div className="business-page">{loadError&&<div className="form-error load-error" role="alert">{loadError}</div>}<div className="business-header"><div className="avatar large">{business?.display_name?.[0]||'S'}</div><div><p className="eyebrow">MI COMERCIO</p><h2>{business?.display_name}</h2><p>{business?.description}</p></div></div><div className="glance-card"><div><p className="eyebrow">A PRIMERA VISTA</p><h3>{loadError&&!services.length?'Catálogo no disponible':`${services.length} servicios publicados`}</h3><p>Tu catálogo está disponible para toda la red.</p></div><div className="glance-icon"><Store size={21}/></div></div><div className="section-heading"><div><p className="eyebrow">TU CATÁLOGO</p><h2>Servicios publicados</h2></div><button className="primary-button compact" onClick={onNew} disabled={!ready} title={ready?undefined:'Tu comercio no está configurado'}><Plus size={16}/> Nuevo servicio</button></div><div className="owned-services">{services.map((s:Service)=><div className="owned-service" key={s.id}><Thumb category={s.categories}/><div className="owned-copy"><strong>{s.title}</strong><p>{s.duration_minutes} min · {s.categories?.name}</p></div><button className="icon-button small" aria-label={`Editar ${s.title}`} onClick={()=>onEdit(s)}><Edit3 size={16}/></button><button className="icon-button small danger" aria-label={`Eliminar ${s.title}`} onClick={async()=>{if(confirm('¿Desactivar este servicio?')){const {error}=await createClient().from('services').update({is_active:false}).eq('id',s.id);if(!error)onRefresh()}}}><Trash2 size={16}/></button></div>)}{!services.length&&!loadError&&<div className="empty-card"><Store size={24}/><h3>Tu catálogo está vacío</h3><p>Publicá tu primer servicio para empezar.</p></div>}</div></div>}
@@ -215,48 +221,67 @@ function Exchanges({client,exchanges,business,exchangeTab,setExchangeTab,error,f
  setExchangeTab:(tab:'received'|'sent')=>void; error:string; focused:string|null;
  setFocused:(id:string|null)=>void; onOpen:(id:string)=>Promise<void>; onRetry:()=>Promise<void>
 }){
- const received=exchanges.filter(e=>e.recipient_business_id===business?.id)
- const sent=exchanges.filter(e=>e.requester_business_id===business?.id)
+ const [filter,setFilter]=useState('all')
+ const [search,setSearch]=useState('')
+ const received=exchanges.filter(e=>!e.archived_at&&e.recipient_business_id===business?.id)
+ const sent=exchanges.filter(e=>!e.archived_at&&e.requester_business_id===business?.id)
+ const archived=exchanges.filter(e=>e.archived_at)
  const selected=exchanges.find(e=>e.id===focused)
  const activeTab=selected?(selected.recipient_business_id===business?.id?'received':'sent'):exchangeTab
- const list=activeTab==='received'?received:sent
+ const folder=filter==='archived'||selected?.archived_at?archived:activeTab==='received'?received:sent
+ const list=folder.filter(exchange=>{
+  if(exchange.id===focused)return true
+  const proposal=exchange.current_proposal
+  const text=[exchange.requester?.display_name,exchange.recipient?.display_name,proposal?.requested_snapshot?.title,proposal?.offered_snapshot?.title].join(' ').toLowerCase()
+  return (filter==='all'||filter==='archived'||exchange.status===filter)&&text.includes(search.trim().toLowerCase())
+ })
  return <section className="page-placeholder">
   <div className="tabs exchange-tabs" aria-label="Bandejas de intercambios">
    {([{id:'received',label:'Recibidos',count:received.length},{id:'sent',label:'Enviados',count:sent.length}] as const).map(item=>
     <button type="button" key={item.id} aria-pressed={activeTab===item.id} className={activeTab===item.id?'selected':''}
-     onClick={()=>{setFocused(null);setExchangeTab(item.id)}}>{item.label} <span>{item.count}</span></button>)}
+     onClick={()=>{setFocused(null);setFilter('all');setExchangeTab(item.id)}}>{item.label} <span>{item.count}</span></button>)}
+  </div>
+  <div className="exchange-filters">
+   <label>Buscar<input value={search} placeholder="Comercio o servicio" onChange={event=>{setFocused(null);setSearch(event.target.value)}}/></label>
+   <label>Estado<select value={selected?.archived_at?'archived':filter} onChange={event=>{setFocused(null);setFilter(event.target.value)}}>
+    <option value="all">Todos los no archivados</option>
+    {Object.entries(statusLabel).map(([value,label])=><option key={value} value={value}>{label}</option>)}
+    <option value="archived">Archivados ({archived.length})</option>
+   </select></label>
   </div>
   {error&&<p className="form-error" role="alert">{error} <button className="secondary-button" onClick={()=>void onRetry()}>Reintentar</button></p>}
   {list.map(exchange=>{
    const proposal=exchange.current_proposal
    const expanded=focused===exchange.id
-   const other=activeTab==='received'?exchange.requester?.display_name:exchange.recipient?.display_name
+   const other=exchange.recipient_business_id===business?.id?exchange.requester?.display_name:exchange.recipient?.display_name
    return <article className="exchange-entry" key={exchange.id}>
     <button type="button" className="exchange-row" aria-expanded={expanded} onClick={()=>expanded?setFocused(null):void onOpen(exchange.id)}>
      <span className="exchange-avatar"><MessageCircle size={18}/></span>
      <span className="exchange-copy"><strong>{other||'Comercio'}</strong><span>{proposal?.offered_snapshot?.title||'Servicio ofrecido'} ↔ {proposal?.requested_snapshot?.title||'Servicio solicitado'}</span></span>
-     <span className={`status ${exchange.status}`}>{statusLabel[exchange.status]}</span>
+     <span className={`status ${exchange.status}`}>{exchange.archived_at?'Archivado':statusLabel[exchange.status]}</span>
     </button>
     {expanded&&<div className="exchange-detail">
      {proposal?.requested_starts_at&&<p><strong>{proposal.requested_snapshot?.title}</strong> · {dateLabel(proposal.requested_starts_at,business?.time_zone)}</p>}
      {proposal?.offered_starts_at&&<p><strong>{proposal.offered_snapshot?.title}</strong> · {dateLabel(proposal.offered_starts_at,business?.time_zone)}</p>}
      {exchange.awaiting_business_id&&<p>{exchange.awaiting_business_id===business?.id?'Esperando tu respuesta':'Esperando respuesta del otro comercio'}</p>}
-     {exchange.awaiting_business_id===business?.id && (exchange.status==='pending'||exchange.status==='countered') &&
+     {!exchange.archived_at && ((exchange.requester_business_id===business?.id && exchange.status!=='accepted' && 'archived_at' in exchange)
+      || (exchange.awaiting_business_id===business?.id && (exchange.status==='pending'||exchange.status==='countered'))) &&
       <ExchangeResponse key={`${exchange.id}-${exchange.current_version}`} exchange={exchange} client={client}
+       ownTurn={exchange.awaiting_business_id===business?.id}
+       canArchive={exchange.requester_business_id===business?.id && 'archived_at' in exchange}
        timeZone={business?.time_zone||'America/New_York'} refresh={onRetry}/>}
-
     </div>}
    </article>
   })}
-  {!list.length&&!error&&<div className="empty-card"><MessageCircle size={24}/><h3>{activeTab==='received'?'Todavía no recibiste propuestas':'Todavía no enviaste propuestas'}</h3></div>}
+  {!list.length&&!error&&<div className="empty-card"><MessageCircle size={24}/><h3>{filter==='archived'?'Todavía no hay intercambios archivados':filter!=='all'||search?'No hay coincidencias':activeTab==='received'?'Todavía no recibiste propuestas':'Todavía no enviaste propuestas'}</h3></div>}
  </section>
 }
 function Agenda({exchanges,business}:any){const events=exchanges.filter((e:Exchange)=>['pending','countered','accepted'].includes(e.status)).flatMap((e:Exchange)=>{const p=e.current_proposal||{};const isRequester=e.requester_business_id===business?.id;const other=isRequester?e.recipient?.display_name:e.requester?.display_name;return [{id:e.id,status:e.status,title:p.requested_snapshot?.title||'Servicio',time:p.requested_starts_at,role:isRequester?'Recibís':'Ofrecés',other},{id:e.id,status:e.status,title:p.offered_snapshot?.title||'Servicio',time:p.offered_starts_at,role:isRequester?'Ofrecés':'Recibís',other}]}).filter((e:any)=>e.time).sort((a:any,b:any)=>new Date(a.time).getTime()-new Date(b.time).getTime());return <div className="calendar-page"><div className="calendar-intro"><div><p className="eyebrow">AGENDA</p><h2>Próximos turnos</h2><p>Una vista simple de tus propuestas y turnos confirmados.</p></div></div><div className="agenda-tabs"><span>Propuestos <strong>{events.filter((e:any)=>e.status!=='accepted').length}</strong></span><span>Confirmados <strong>{events.filter((e:any)=>e.status==='accepted').length}</strong></span></div><div className="agenda-list">{events.map((e:any)=><article className={`agenda-item ${e.status==='accepted'?'agenda-confirmed':''}`} key={`${e.id}-${e.role}`}><div className="agenda-date"><strong>{new Intl.DateTimeFormat('es-AR',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:business?.time_zone||'America/New_York'}).format(new Date(e.time))}</strong><span>{new Intl.DateTimeFormat('es-AR',{weekday:'short',day:'numeric',month:'short',timeZone:business?.time_zone||'America/New_York'}).format(new Date(e.time))}</span></div><div className="agenda-detail"><strong>{e.title}</strong><p>{e.role} · {e.other}</p><span className={`status ${e.status==='accepted'?'accepted':'pending'}`}>{e.status==='accepted'?'Confirmado':'Por confirmar'}</span></div></article>)}{!events.length&&<div className="empty-card"><CalendarDays size={24}/><h3>Todavía no tenés turnos de intercambio</h3><p>Explorá servicios para iniciar una propuesta.</p></div>}</div></div>}
 
-function ExchangeResponse({exchange,client,timeZone,refresh}:{
- exchange:Exchange; client:ReturnType<typeof createClient>; timeZone:string; refresh:()=>Promise<void>
+function ExchangeResponse({exchange,client,timeZone,refresh,ownTurn,canArchive}:{
+ ownTurn:boolean; canArchive:boolean; exchange:Exchange; client:ReturnType<typeof createClient>; timeZone:string; refresh:()=>Promise<void>
 }){
- const [mode,setMode]=useState<'counter'|'reject'|null>(null)
+ const [mode,setMode]=useState<'counter'|'reject'|'archive'|null>(null)
  const [requested,setRequested]=useState('')
  const [offered,setOffered]=useState('')
  const [busy,setBusy]=useState(false)
@@ -272,7 +297,7 @@ function ExchangeResponse({exchange,client,timeZone,refresh}:{
   setError('')
   setMode('counter')
  }
- async function respond(action:'accept'|'reject'|'counter'){
+ async function respond(action:'accept'|'reject'|'counter'|'archive'){
   if(inflight.current)return
   setError('')
   const args={p_exchange_id:exchange.id,p_expected_version:exchange.current_version}
@@ -292,7 +317,7 @@ function ExchangeResponse({exchange,client,timeZone,refresh}:{
   try{
    const result=newTimes
     ?await client.rpc('counter_exchange',{...args,...newTimes})
-    :await client.rpc(action==='accept'?'accept_exchange':'reject_exchange',args)
+    :await client.rpc(action==='accept'?'accept_exchange':action==='archive'?'archive_exchange':'reject_exchange',args)
    if(result.error){
     const message=result.error.message
     if(['STALE_VERSION','EXCHANGE_CLOSED','NOT_YOUR_TURN'].includes(message)){
@@ -323,17 +348,19 @@ function ExchangeResponse({exchange,client,timeZone,refresh}:{
    <AppointmentPicker label="Primer turno" service={proposal.requested_snapshot} value={requested} timeZone={timeZone} onChange={setRequested}/>
    <AppointmentPicker label="Segundo turno" service={proposal.offered_snapshot} value={offered} timeZone={timeZone} onChange={setOffered}/>
   </>}
+  {mode==='archive'&&<p>¿Querés retirar esta propuesta y moverla a Archivados?</p>}
   {mode==='reject'&&<p>¿Querés rechazar esta propuesta?</p>}
   {error&&<p className="form-error" role="alert">{error}</p>}
   <div className="exchange-response-actions">
    {mode===null?<>
-    <button type="button" className="primary-button" disabled={busy} onClick={()=>void respond('accept')}>Aceptar</button>
-    {proposal?.requested_snapshot&&proposal?.offered_snapshot&&
+    {ownTurn&&<button type="button" className="primary-button" disabled={busy} onClick={()=>void respond('accept')}>Aceptar</button>}
+    {exchange.status!=='rejected'&&proposal?.requested_snapshot&&proposal?.offered_snapshot&&
      <button type="button" className="secondary-button" disabled={busy} onClick={startCounter}>Modificar turnos</button>}
-    <button type="button" className="secondary-button" disabled={busy} onClick={()=>{setError('');setMode('reject')}}>Rechazar</button>
+    {ownTurn&&<button type="button" className="secondary-button" disabled={busy} onClick={()=>{setError('');setMode('reject')}}>Rechazar</button>}
+    {canArchive&&<button type="button" className="secondary-button" disabled={busy} onClick={()=>{setError('');setMode('archive')}}>Archivar</button>}
    </>:<>
     <button type="button" className="primary-button" disabled={busy} onClick={()=>void respond(mode)}>
-     {mode==='counter'?'Enviar contrapropuesta':'Confirmar rechazo'}
+     {mode==='counter'?'Guardar turnos':mode==='archive'?'Confirmar archivo':'Confirmar rechazo'}
     </button>
     <button type="button" className="secondary-button" disabled={busy} onClick={()=>{setError('');setMode(null)}}>Volver</button>
    </>}

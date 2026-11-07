@@ -7,6 +7,7 @@ import type { createClient } from '@/lib/supabase/client'
 const labels: Record<string, string> = {
   created: 'Recibiste una propuesta',
   countered: 'Recibiste una contrapropuesta',
+  archived: 'Archivaron una propuesta',
   accepted: 'Aceptaron el intercambio',
   rejected: 'Rechazaron el intercambio',
   message: 'Recibiste un mensaje',
