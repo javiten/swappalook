@@ -68,7 +68,7 @@ export default function Home(){
  }
  useEffect(()=>{load()},[]); const visible=services.filter(s=>(filter==='all'||s.category_id===filter)&&`${s.title} ${s.businesses?.display_name}`.toLowerCase().includes(query.toLowerCase())); async function logout(){await supabase.auth.signOut();location.href='/login'} function flash(v:string){setNotice(v);setTimeout(()=>setNotice(''),3000)}
  if(loading)return <><Splash ready={false}/><main className="catalog-placeholder" aria-busy="true"><i/><i/><i/></main></>
- return <><Splash ready={true}/><div className="app-shell"><aside className="sidebar"><div className="side-brand"><img src={logo} alt="SwappaLook"/><span>Swappa<span>Look</span></span></div><div className="side-nav">{nav.map(n=><button key={n.id} className={tab===n.id?'active':''} onClick={()=>{setTab(n.id);if(n.id==='exchanges')void load()}}><n.icon size={18}/><span>{n.label}</span>{n.id==='exchanges'&&exchanges.some(e=>e.awaiting_business_id===business?.id)&&<b>{exchanges.filter(e=>e.awaiting_business_id===business?.id).length}</b>}</button>)}</div><div className="sidebar-foot"><div className="profile-mini"><div className="avatar">{business?.display_name?.[0]||'S'}</div><div><strong>{business?.display_name}</strong><small>Comercio activo</small></div></div><button className="logout" onClick={logout}><LogOut size={16}/> Cerrar sesión</button></div></aside><main className="main-area"><header className="topbar"><div><p className="eyebrow">RED DE CONFIANZA</p><h1>{tab==='explore'?'Explorar servicios':nav.find(n=>n.id===tab)?.label}</h1></div>{business?.id&&<Notifications key={business.id} client={supabase} businessId={business.id} onOpen={openExchange}/>}</header><div className="content">{notice&&<div className="toast"><Check size={16}/> {notice}</div>}{tab==='explore'&&<Explore businessId={business?.id} visible={visible} categories={categories} filter={filter} setFilter={setFilter} query={query} setQuery={setQuery} onSelect={setSelected}/>} {tab==='exchanges'&&<Exchanges error={exchangeError} focused={focusedExchange} setFocused={setFocusedExchange} onOpen={openExchange} onRetry={load} exchanges={exchanges} business={business} exchangeTab={exchangeTab} setExchangeTab={setExchangeTab}/>} {tab==='calendar'&&<Agenda exchanges={exchanges} business={business}/>} {tab==='business'&&<Business business={business} loadError={loadError} services={mine} onNew={()=>{setEditing(null);setShowService(true)}} onEdit={(s:Service)=>{setEditing(s);setShowService(true)}} onRefresh={load}/>}</div></main><nav className="bottom-nav">{nav.map(n=><button key={n.id} className={tab===n.id?'active':''} onClick={()=>{setTab(n.id);if(n.id==='exchanges')void load()}}><n.icon size={19}/><span>{n.label}</span></button>)}</nav></div>{showService&&business?.primary_category_id&&<ServiceModal service={editing} business={business} supabase={supabase} onClose={()=>setShowService(false)} onSaved={()=>{setShowService(false);load();flash(editing?'Servicio actualizado':'Servicio guardado')}}/>}{selected&&<ExchangeModal service={selected} owned={selected.business_id===business?.id} onManage={()=>{setSelected(null);setTab('business')}} timeZone={business?.time_zone||'America/New_York'} mine={mine} supabase={supabase} onClose={()=>setSelected(null)} onSaved={()=>{setSelected(null);setFocusedExchange(null);load();setExchangeTab('sent');setTab('exchanges');flash('Propuesta enviada')}}/>}</>
+ return <><Splash ready={true}/><div className="app-shell"><aside className="sidebar"><div className="side-brand"><img src={logo} alt="SwappaLook"/><span>Swappa<span>Look</span></span></div><div className="side-nav">{nav.map(n=><button key={n.id} className={tab===n.id?'active':''} onClick={()=>{setTab(n.id);if(n.id==='exchanges')void load()}}><n.icon size={18}/><span>{n.label}</span>{n.id==='exchanges'&&exchanges.some(e=>e.awaiting_business_id===business?.id)&&<b>{exchanges.filter(e=>e.awaiting_business_id===business?.id).length}</b>}</button>)}</div><div className="sidebar-foot"><div className="profile-mini"><div className="avatar">{business?.display_name?.[0]||'S'}</div><div><strong>{business?.display_name}</strong><small>Comercio activo</small></div></div><button className="logout" onClick={logout}><LogOut size={16}/> Cerrar sesión</button></div></aside><main className="main-area"><header className="topbar"><div><p className="eyebrow">RED DE CONFIANZA</p><h1>{tab==='explore'?'Explorar servicios':nav.find(n=>n.id===tab)?.label}</h1></div>{business?.id&&<Notifications key={business.id} client={supabase} businessId={business.id} onOpen={openExchange}/>}</header><div className="content">{notice&&<div className="toast"><Check size={16}/> {notice}</div>}{tab==='explore'&&<Explore businessId={business?.id} visible={visible} categories={categories} filter={filter} setFilter={setFilter} query={query} setQuery={setQuery} onSelect={setSelected}/>} {tab==='exchanges'&&<Exchanges client={supabase} error={exchangeError} focused={focusedExchange} setFocused={setFocusedExchange} onOpen={openExchange} onRetry={load} exchanges={exchanges} business={business} exchangeTab={exchangeTab} setExchangeTab={setExchangeTab}/>} {tab==='calendar'&&<Agenda exchanges={exchanges} business={business}/>} {tab==='business'&&<Business business={business} loadError={loadError} services={mine} onNew={()=>{setEditing(null);setShowService(true)}} onEdit={(s:Service)=>{setEditing(s);setShowService(true)}} onRefresh={load}/>}</div></main><nav className="bottom-nav">{nav.map(n=><button key={n.id} className={tab===n.id?'active':''} onClick={()=>{setTab(n.id);if(n.id==='exchanges')void load()}}><n.icon size={19}/><span>{n.label}</span></button>)}</nav></div>{showService&&business?.primary_category_id&&<ServiceModal service={editing} business={business} supabase={supabase} onClose={()=>setShowService(false)} onSaved={()=>{setShowService(false);load();flash(editing?'Servicio actualizado':'Servicio guardado')}}/>}{selected&&<ExchangeModal service={selected} owned={selected.business_id===business?.id} onManage={()=>{setSelected(null);setTab('business')}} timeZone={business?.time_zone||'America/New_York'} mine={mine} supabase={supabase} onClose={()=>setSelected(null)} onSaved={()=>{setSelected(null);setFocusedExchange(null);load();setExchangeTab('sent');setTab('exchanges');flash('Propuesta enviada')}}/>}</>
 }
 function Explore({businessId,visible,categories,filter,setFilter,query,setQuery,onSelect}:any){return <><section className="hero"><div><p className="eyebrow">INTERCAMBIÁ SIN DINERO</p><h2>Encontrá tu próximo intercambio.</h2><p>Descubrí los servicios publicados por la red.</p></div><div className="hero-spark"><Sparkles size={28}/></div></section><div className="search-row"><div className="search-box"><Search size={18}/><input aria-label="Buscar servicio o comercio" placeholder="Buscar servicio o comercio" value={query} onChange={e=>setQuery(e.target.value)}/></div></div><div className="filter-row"><button className={filter==='all'?'filter active':'filter'} onClick={()=>setFilter('all')}>Todos</button>{categories.map((c:Category)=><button key={c.id} className={filter===c.id?'filter active':'filter'} onClick={()=>setFilter(c.id)}>{c.name}</button>)}</div><div className="section-heading"><div><p className="eyebrow">CATÁLOGO INTERNO</p><h2>Servicios para intercambiar</h2></div><span className="muted">{visible.length} disponibles</span></div><div className="service-grid">{visible.map((s:Service)=><button className="service-card" key={s.id} onClick={()=>onSelect(s)}><Thumb category={s.categories}/><div className="service-info"><div className="card-top"><span className="category-label">{s.categories?.name}</span><span className="card-duration"><Clock3 size={14} aria-hidden="true"/>{s.duration_minutes} min</span></div><h3>{s.title}</h3><p>{s.businesses?.display_name}{s.business_id===businessId&&<small className="own-badge">Tu comercio</small>}</p><span className="card-link">Ver servicio <ChevronRight size={15}/></span></div></button>)}{!visible.length&&<div className="empty-card"><Sparkles size={24}/><h3>No encontramos servicios</h3><p>Probá con otra búsqueda o filtro.</p></div>}</div></>}
 function Business({business,loadError,services,onNew,onEdit,onRefresh}:any){const ready=!!business?.primary_category_id;return <div className="business-page">{loadError&&<div className="form-error load-error" role="alert">{loadError}</div>}<div className="business-header"><div className="avatar large">{business?.display_name?.[0]||'S'}</div><div><p className="eyebrow">MI COMERCIO</p><h2>{business?.display_name}</h2><p>{business?.description}</p></div></div><div className="glance-card"><div><p className="eyebrow">A PRIMERA VISTA</p><h3>{loadError&&!services.length?'Catálogo no disponible':`${services.length} servicios publicados`}</h3><p>Tu catálogo está disponible para toda la red.</p></div><div className="glance-icon"><Store size={21}/></div></div><div className="section-heading"><div><p className="eyebrow">TU CATÁLOGO</p><h2>Servicios publicados</h2></div><button className="primary-button compact" onClick={onNew} disabled={!ready} title={ready?undefined:'Tu comercio no está configurado'}><Plus size={16}/> Nuevo servicio</button></div><div className="owned-services">{services.map((s:Service)=><div className="owned-service" key={s.id}><Thumb category={s.categories}/><div className="owned-copy"><strong>{s.title}</strong><p>{s.duration_minutes} min · {s.categories?.name}</p></div><button className="icon-button small" aria-label={`Editar ${s.title}`} onClick={()=>onEdit(s)}><Edit3 size={16}/></button><button className="icon-button small danger" aria-label={`Eliminar ${s.title}`} onClick={async()=>{if(confirm('¿Desactivar este servicio?')){const {error}=await createClient().from('services').update({is_active:false}).eq('id',s.id);if(!error)onRefresh()}}}><Trash2 size={16}/></button></div>)}{!services.length&&!loadError&&<div className="empty-card"><Store size={24}/><h3>Tu catálogo está vacío</h3><p>Publicá tu primer servicio para empezar.</p></div>}</div></div>}
@@ -190,7 +190,7 @@ function ExchangeModal({service,owned,onManage,timeZone,mine,supabase,onClose,on
  </div>,document.body)
 }
 function AppointmentPicker({label,service,value,timeZone,onChange}:{
- label:string;service:Service;value:string;timeZone:string;onChange:(value:string)=>void
+ label:string;service:Pick<Service,'title'|'duration_minutes'>;value:string;timeZone:string;onChange:(value:string)=>void
 }){
  const [date,time]=value.split('T')
  const formatter = new Intl.DateTimeFormat('es-AR',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})
@@ -205,8 +205,8 @@ function AppointmentPicker({label,service,value,timeZone,onChange}:{
   </select></label>
  </div>
 }
-function Exchanges({exchanges,business,exchangeTab,setExchangeTab,error,focused,setFocused,onOpen,onRetry}:{
- exchanges:Exchange[]; business:{id:string;time_zone:string}|null; exchangeTab:'received'|'sent';
+function Exchanges({client,exchanges,business,exchangeTab,setExchangeTab,error,focused,setFocused,onOpen,onRetry}:{
+ client:ReturnType<typeof createClient>; exchanges:Exchange[]; business:{id:string;time_zone:string}|null; exchangeTab:'received'|'sent';
  setExchangeTab:(tab:'received'|'sent')=>void; error:string; focused:string|null;
  setFocused:(id:string|null)=>void; onOpen:(id:string)=>Promise<void>; onRetry:()=>Promise<void>
 }){
@@ -236,6 +236,10 @@ function Exchanges({exchanges,business,exchangeTab,setExchangeTab,error,focused,
      {proposal?.requested_starts_at&&<p><strong>{proposal.requested_snapshot?.title}</strong> · {dateLabel(proposal.requested_starts_at,business?.time_zone)}</p>}
      {proposal?.offered_starts_at&&<p><strong>{proposal.offered_snapshot?.title}</strong> · {dateLabel(proposal.offered_starts_at,business?.time_zone)}</p>}
      {exchange.awaiting_business_id&&<p>{exchange.awaiting_business_id===business?.id?'Esperando tu respuesta':'Esperando respuesta del otro comercio'}</p>}
+     {exchange.awaiting_business_id===business?.id && (exchange.status==='pending'||exchange.status==='countered') &&
+      <ExchangeResponse key={`${exchange.id}-${exchange.current_version}`} exchange={exchange} client={client}
+       timeZone={business?.time_zone||'America/New_York'} refresh={onRetry}/>}
+
     </div>}
    </article>
   })}
@@ -243,3 +247,91 @@ function Exchanges({exchanges,business,exchangeTab,setExchangeTab,error,focused,
  </section>
 }
 function Agenda({exchanges,business}:any){const events=exchanges.filter((e:Exchange)=>['pending','countered','accepted'].includes(e.status)).flatMap((e:Exchange)=>{const p=e.current_proposal||{};const isRequester=e.requester_business_id===business?.id;const other=isRequester?e.recipient?.display_name:e.requester?.display_name;return [{id:e.id,status:e.status,title:p.requested_snapshot?.title||'Servicio',time:p.requested_starts_at,role:isRequester?'Recibís':'Ofrecés',other},{id:e.id,status:e.status,title:p.offered_snapshot?.title||'Servicio',time:p.offered_starts_at,role:isRequester?'Ofrecés':'Recibís',other}]}).filter((e:any)=>e.time).sort((a:any,b:any)=>new Date(a.time).getTime()-new Date(b.time).getTime());return <div className="calendar-page"><div className="calendar-intro"><div><p className="eyebrow">AGENDA</p><h2>Próximos turnos</h2><p>Una vista simple de tus propuestas y turnos confirmados.</p></div></div><div className="agenda-tabs"><strong>Propuestos</strong><span>{events.filter((e:any)=>e.status!=='accepted').length}</span><strong>Confirmados</strong><span>{events.filter((e:any)=>e.status==='accepted').length}</span></div><div className="agenda-list">{events.map((e:any)=><article className={`agenda-item ${e.status==='accepted'?'agenda-confirmed':''}`} key={`${e.id}-${e.role}`}><div className="agenda-date"><strong>{dateLabel(e.time,business?.time_zone)}</strong><span>{e.status==='accepted'?'Confirmado':'Aguardando confirmación'}</span></div><div className="agenda-detail"><strong>{e.title}</strong><p>{e.role} · {e.other}</p></div></article>)}{!events.length&&<div className="empty-card"><CalendarDays size={24}/><h3>Todavía no tenés turnos de intercambio</h3><p>Explorá servicios para iniciar una propuesta.</p></div>}</div></div>}
+
+function ExchangeResponse({exchange,client,timeZone,refresh}:{
+ exchange:Exchange; client:ReturnType<typeof createClient>; timeZone:string; refresh:()=>Promise<void>
+}){
+ const [mode,setMode]=useState<'counter'|'reject'|null>(null)
+ const [requested,setRequested]=useState('')
+ const [offered,setOffered]=useState('')
+ const [busy,setBusy]=useState(false)
+ const [error,setError]=useState('')
+ const inflight=useRef(false)
+ const proposal=exchange.current_proposal
+ function startCounter(){
+  const format=new Intl.DateTimeFormat('sv-SE',{
+   timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23',
+  })
+  setRequested(proposal?.requested_starts_at?format.format(new Date(proposal.requested_starts_at)).replace(' ','T'):'')
+  setOffered(proposal?.offered_starts_at?format.format(new Date(proposal.offered_starts_at)).replace(' ','T'):'')
+  setError('')
+  setMode('counter')
+ }
+ async function respond(action:'accept'|'reject'|'counter'){
+  if(inflight.current)return
+  setError('')
+  const args={p_exchange_id:exchange.id,p_expected_version:exchange.current_version}
+  let newTimes:{p_requested_start:string;p_offered_start:string}|undefined
+  if(action==='counter'){
+   const requestedStart=dateTimeInZone(requested,timeZone)
+   const offeredStart=dateTimeInZone(offered,timeZone)
+   const now=Date.now()
+   if(requestedStart===null||offeredStart===null||requestedStart<=now||offeredStart<=now){
+    setError('Elegí una fecha y un horario futuros para ambos turnos.')
+    return
+   }
+   newTimes={p_requested_start:new Date(requestedStart).toISOString(),p_offered_start:new Date(offeredStart).toISOString()}
+  }
+  inflight.current=true
+  setBusy(true)
+  try{
+   const result=newTimes
+    ?await client.rpc('counter_exchange',{...args,...newTimes})
+    :await client.rpc(action==='accept'?'accept_exchange':'reject_exchange',args)
+   if(result.error){
+    const message=result.error.message
+    if(['STALE_VERSION','EXCHANGE_CLOSED','NOT_YOUR_TURN'].includes(message)){
+     setError('El intercambio cambió. Revisá la propuesta actual.')
+     await refresh()
+    }else if(message==='SLOT_UNAVAILABLE'){
+     setError('Uno de los turnos ya no está disponible. Proponé otro horario.')
+    }else if(message==='SLOTS_OVERLAP'){
+     setError('Los dos turnos se superponen. Elegí horarios distintos.')
+    }else if(message==='SERVICE_INACTIVE'){
+     setError('Uno de los servicios ya no está publicado.')
+    }else{
+     setError('No pudimos guardar la respuesta. Intentá de nuevo.')
+    }
+    return
+   }
+   setMode(null)
+   await refresh()
+  }catch{
+   setError('No pudimos actualizar el intercambio. Revisá tu conexión e intentá de nuevo.')
+  }finally{
+   inflight.current=false
+   setBusy(false)
+  }
+ }
+ return <div className="exchange-response" aria-busy={busy}>
+  {mode==='counter'&&<>
+   <AppointmentPicker label="Primer turno" service={proposal.requested_snapshot} value={requested} timeZone={timeZone} onChange={setRequested}/>
+   <AppointmentPicker label="Segundo turno" service={proposal.offered_snapshot} value={offered} timeZone={timeZone} onChange={setOffered}/>
+  </>}
+  {mode==='reject'&&<p>¿Querés rechazar esta propuesta?</p>}
+  {error&&<p className="form-error" role="alert">{error}</p>}
+  <div className="exchange-response-actions">
+   {mode===null?<>
+    <button type="button" className="primary-button" disabled={busy} onClick={()=>void respond('accept')}>Aceptar</button>
+    {proposal?.requested_snapshot&&proposal?.offered_snapshot&&
+     <button type="button" className="secondary-button" disabled={busy} onClick={startCounter}>Modificar turnos</button>}
+    <button type="button" className="secondary-button" disabled={busy} onClick={()=>{setError('');setMode('reject')}}>Rechazar</button>
+   </>:<>
+    <button type="button" className="primary-button" disabled={busy} onClick={()=>void respond(mode)}>
+     {mode==='counter'?'Enviar contrapropuesta':'Confirmar rechazo'}
+    </button>
+    <button type="button" className="secondary-button" disabled={busy} onClick={()=>{setError('');setMode(null)}}>Volver</button>
+   </>}
+  </div>
+ </div>
+}

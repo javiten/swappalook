@@ -100,3 +100,6 @@
   .service-card { grid-template-columns: 60px minmax(0, 1fr); }
   .service-card .service-thumb { min-height: 60px; align-self: start; }
 }
+.exchange-response { margin-top: 12px; }
+.exchange-response-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.exchange-response-actions button { min-height: 44px; }
